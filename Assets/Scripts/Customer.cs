@@ -1,6 +1,7 @@
 using System;
 using System.Collections;
 using System.Collections.Generic;
+using TMPro;
 using UnityEngine;
 using UnityEngine.UI;
 
@@ -10,50 +11,42 @@ public class Customer : MonoBehaviour
     public float pacienciaMax = 10f;
     private float pacienciaActual;
 
-    public Slider barraPaciencia;
+    public Image barraPaciencia;
     public Image fotoCliente;
+    public TextMeshProUGUI pedidoTxt;
 
-    private bool esperando = true;
+    public bool atendido = false;
 
-    private void Start()
+    public void inicializar(Pedido nuevoPedido)
     {
+        pedidoActual = nuevoPedido;
         pacienciaActual = pacienciaMax;
-        StartCoroutine(Esperar());
+        atendido = false;
+        actualizarPedido();
     }
 
-    IEnumerator Esperar()
+    private void Update()
     {
-        while (pacienciaActual > 0 && esperando) 
-        {
-            pacienciaActual -= Time.deltaTime;
-            barraPaciencia.value = pacienciaActual / pacienciaMax;
-            yield return null;
-        }
+        if (atendido) return;
 
-        if (esperando)
+        pacienciaActual -= Time.deltaTime;
+        barraPaciencia.fillAmount = pacienciaActual / pacienciaMax;
+        if (pacienciaActual <= 0)
         {
-            clienteSeVa(false);
-        }
-    }
-
-    public void recibirPedido(List<string> sabores)
-    {
-        esperando = false;
-        StopAllCoroutines();
-
-        if (pedidoActual.esCorrecto(sabores))
-        {
-            GameManager.instace.agregarDinero(10);
-            clienteSeVa(true);
-        }
-        else
-        {
-            clienteSeVa(false);
+            GameManager.instace.clienteSeFue(this);
         }
     }
 
-    private void clienteSeVa(bool feliz)
+    public void actualizarPedido()
     {
-        Destroy(this.gameObject,0.5f);
+        string texto = "Sabores: " + string.Join(", ", pedidoActual.saboresEsperados.ConvertAll(s => s.nombre)) +
+                        "\nCubiertas: " + string.Join(", ", pedidoActual.cubiertasEsperadas.ConvertAll(s => s.nombre)) +
+                        "\nDecoración: " + (pedidoActual.decoracionEsperada != null ? pedidoActual.decoracionEsperada.nombre : "ninguna");
+        pedidoTxt.text = texto;
+    }
+
+    public void serSeleccionado()
+    {
+        GameManager.instace.seleccionarCliente(this);
     }
 }

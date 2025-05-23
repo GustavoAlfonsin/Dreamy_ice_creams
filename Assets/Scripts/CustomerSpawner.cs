@@ -6,62 +6,31 @@ using UnityEngine;
 public class CustomerSpawner : MonoBehaviour
 {
     public GameObject customerPrefab;
-    public Transform spawnPoint;
+    public Transform[] spawnPoints;
+    public List<Customer> clientesEnBarra = new List<Customer>();
 
-    public float tiempoEntreClientes = 5f;
-    private float tiempoRestante;
+    int maxClientes = 4;
+    public GeneradorDePedidos generador;
 
-    public List<string> saboresDisponibles;
-
-    private bool puedeSpawnear = true;
-
-    private void Start()
+    public void IntentarSpawnearCliente()
     {
-        tiempoRestante = tiempoEntreClientes;
-        spawnNuevoCliente();
+        if (clientesEnBarra.Count >= maxClientes) return;
+
+        GameObject nuevoObj = Instantiate(customerPrefab, spawnPoints[clientesEnBarra.Count]);
+        Customer cliente = nuevoObj.GetComponent<Customer>();
+        Pedido random = generador.GenerarPedidoAleatorio();
+        cliente.inicializar(random);
+        clientesEnBarra.Add(cliente);
     }
 
-    private void Update()
+    public void quitarCliente(Customer cliente)
     {
-        if (!puedeSpawnear) return;
-
-        tiempoRestante -= Time.deltaTime;
-
-        if (tiempoRestante <= 0f)
-        {
-            spawnNuevoCliente();
-            tiempoRestante = tiempoEntreClientes;
-        }
+        clientesEnBarra.Remove(cliente);
+        Destroy(cliente.gameObject);
     }
 
-    private void spawnNuevoCliente()
-    {
-        GameObject clienteGO = Instantiate(customerPrefab, spawnPoint.position,Quaternion.identity);
-        Customer nuevoCliente = clienteGO.GetComponent<Customer>();
 
-        Pedido nuevoPedido = generarPedidoAleatorio();
-        nuevoCliente.pedidoActual = nuevoPedido;
+    
 
-        OrderManager.instance.EstablecerClienteActual(nuevoCliente);
-
-    }
-
-    private Pedido generarPedidoAleatorio()
-    {
-        Pedido pedido = new Pedido();
-        pedido.sabores = new List<string>();
-
-        int cantidadSabores = UnityEngine.Random.Range(1,3);
-
-        List<string> copiaSabores = new List<string>(saboresDisponibles);
-
-        for (int i = 0; i < cantidadSabores && copiaSabores.Count > 0; i++)
-        {
-            int index = UnityEngine.Random.Range(0, copiaSabores.Count);
-            pedido.sabores.Add(copiaSabores[index]);
-            copiaSabores.RemoveAt(index);
-        }
-
-        return pedido;
-    }
+    
 }
